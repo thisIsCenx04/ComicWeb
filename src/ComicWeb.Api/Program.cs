@@ -51,7 +51,6 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"))
 builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("Storage"));
 builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<JwtService>();
-builder.Services.AddScoped<DatabaseBootstrapper>();
 builder.Services.AddScoped<DbSeeder>();
 builder.Services.AddScoped<CloudinaryStorageService>();
 
@@ -142,9 +141,8 @@ app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
-    var bootstrapper = scope.ServiceProvider.GetRequiredService<DatabaseBootstrapper>();
-    var schemaPath = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "ComicWeb.Infrastructure", "Migrations", "001_init.sql"));
-    await bootstrapper.EnsureSchemaAsync(schemaPath);
+    var dbContext = scope.ServiceProvider.GetRequiredService<ComicDbContext>();
+    await dbContext.Database.MigrateAsync();
     var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
     await seeder.SeedAsync();
 }
