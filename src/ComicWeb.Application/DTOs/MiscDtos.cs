@@ -3,6 +3,8 @@ namespace ComicWeb.Application.DTOs;
 public sealed class UploadResponse
 {
     public required string Link { get; init; }
+    public int? Width { get; init; }
+    public int? Height { get; init; }
 }
 
 public sealed class PurchaseChapterRequest

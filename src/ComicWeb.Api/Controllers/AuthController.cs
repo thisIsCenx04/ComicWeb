@@ -19,6 +19,9 @@ public sealed class AuthController : ControllerBase
     private readonly JwtService _jwtService;
     private readonly JwtSettings _jwtSettings;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// </summary>
     public AuthController(ComicDbContext dbContext, JwtService jwtService, IOptions<JwtSettings> jwtSettings)
     {
         _dbContext = dbContext;
@@ -26,6 +29,9 @@ public sealed class AuthController : ControllerBase
         _jwtSettings = jwtSettings.Value;
     }
 
+    /// <summary>
+    /// Registers a new user and issues tokens.
+    /// </summary>
     [HttpPost("register")]
     public async Task<ActionResult<ApiResponse<AuthTokensResponse>>> Register(AuthRegisterRequest request)
     {
@@ -60,6 +66,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<AuthTokensResponse>.From(tokens, StatusCodes.Status200OK, $"Verify code: {verifyCode}"));
     }
 
+    /// <summary>
+    /// Authenticates a user and issues tokens.
+    /// </summary>
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponse<AuthTokensResponse>>> Login(AuthLoginRequest request)
     {
@@ -84,6 +93,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<AuthTokensResponse>.From(tokens, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Returns the current user's profile.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<UserProfileDto>>> Me()
@@ -108,6 +120,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<UserProfileDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Revokes a refresh token for the current user.
+    /// </summary>
     [Authorize]
     [HttpPost("logout")]
     public async Task<ActionResult<ApiResponse<object?>>> Logout(AuthRefreshRequest request)
@@ -123,6 +138,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Exchanges a refresh token for new tokens.
+    /// </summary>
     [HttpPost("refetchToken")]
     public async Task<ActionResult<ApiResponse<AuthTokensResponse>>> Refresh(AuthRefreshRequest request)
     {
@@ -146,6 +164,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<AuthTokensResponse>.From(tokens, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a password reset code for a user.
+    /// </summary>
     [HttpPost("forgot-password")]
     public async Task<ActionResult<ApiResponse<object?>>> ForgotPassword(AuthForgotPasswordRequest request)
     {
@@ -168,6 +189,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(new { code }, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Resets a user's password using a reset code.
+    /// </summary>
     [HttpPost("reset-password")]
     public async Task<ActionResult<ApiResponse<object?>>> ResetPassword(AuthResetPasswordRequest request)
     {
@@ -192,6 +216,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates the current user's password.
+    /// </summary>
     [Authorize]
     [HttpPost("update-password")]
     public async Task<ActionResult<ApiResponse<object?>>> UpdatePassword(AuthUpdatePasswordRequest request)
@@ -214,6 +241,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Verifies a user's email address using a code.
+    /// </summary>
     [HttpPost("verify")]
     public async Task<ActionResult<ApiResponse<object?>>> VerifyEmail(AuthVerifyEmailRequest request)
     {
@@ -238,6 +268,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Resends an email verification code.
+    /// </summary>
     [HttpPost("resend-confirm")]
     public async Task<ActionResult<ApiResponse<object?>>> ResendConfirm(AuthResendVerifyRequest request)
     {
@@ -260,6 +293,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<object?>.From(new { code }, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Signs in a user using Google profile data.
+    /// </summary>
     [HttpPost("google")]
     public async Task<ActionResult<ApiResponse<AuthTokensResponse>>> GoogleLogin(AuthGoogleLoginRequest request)
     {
@@ -282,6 +318,9 @@ public sealed class AuthController : ControllerBase
         return Ok(ApiResponse<AuthTokensResponse>.From(tokens, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Issues and persists access and refresh tokens for a user.
+    /// </summary>
     private async Task<AuthTokensResponse> IssueTokensAsync(User user)
     {
         var accessToken = _jwtService.GenerateAccessToken(user);
@@ -302,6 +341,9 @@ public sealed class AuthController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Generates a six-digit verification code.
+    /// </summary>
     private static string GenerateCode()
     {
         return RandomNumberGenerator.GetInt32(100000, 999999).ToString();

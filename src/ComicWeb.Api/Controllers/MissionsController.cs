@@ -14,11 +14,17 @@ public sealed class MissionsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MissionsController"/> class.
+    /// </summary>
     public MissionsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets all missions.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<Mission>>>> GetAll()
     {
@@ -26,6 +32,9 @@ public sealed class MissionsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<Mission>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a new mission.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<Mission>>> Create(MissionCreateRequest request)
@@ -49,6 +58,9 @@ public sealed class MissionsController : ControllerBase
         return Ok(ApiResponse<Mission>.From(mission, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Marks a mission as completed for the current user.
+    /// </summary>
     [Authorize]
     [HttpPost("{id:guid}/complete")]
     public async Task<ActionResult<ApiResponse<object?>>> Complete(Guid id)

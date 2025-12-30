@@ -13,11 +13,17 @@ public sealed class CategoriesController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CategoriesController"/> class.
+    /// </summary>
     public CategoriesController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets a paged list of categories.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<CategoryDto>>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null)
     {
@@ -51,6 +57,9 @@ public sealed class CategoriesController : ControllerBase
         return Ok(ApiResponse<PagedResult<CategoryDto>>.From(result, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a category by id.
+    /// </summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> GetById(Guid id)
     {
@@ -71,6 +80,9 @@ public sealed class CategoriesController : ControllerBase
         return Ok(ApiResponse<CategoryDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a new category.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> Create(CategoryCreateRequest request)
@@ -102,6 +114,9 @@ public sealed class CategoriesController : ControllerBase
         return Ok(ApiResponse<CategoryDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates an existing category.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<CategoryDto>>> Update(Guid id, CategoryUpdateRequest request)
@@ -134,6 +149,9 @@ public sealed class CategoriesController : ControllerBase
         return Ok(ApiResponse<CategoryDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Deletes a category by id.
+    /// </summary>
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Delete(Guid id)

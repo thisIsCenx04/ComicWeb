@@ -6,10 +6,16 @@ namespace ComicWeb.Api.Filters;
 
 public sealed class ApiResponseFilter : IActionFilter
 {
+    /// <summary>
+    /// Runs before the action executes.
+    /// </summary>
     public void OnActionExecuting(ActionExecutingContext context)
     {
     }
 
+    /// <summary>
+    /// Wraps action results in a consistent API response envelope.
+    /// </summary>
     public void OnActionExecuted(ActionExecutedContext context)
     {
         if (context.Exception != null)
@@ -34,6 +40,26 @@ public sealed class ApiResponseFilter : IActionFilter
         {
             var statusCode = statusCodeResult.StatusCode;
             context.Result = new ObjectResult(ApiResponse<object?>.From(null, statusCode))
+            {
+                StatusCode = statusCode
+            };
+            return;
+        }
+
+        if (context.Result is ForbidResult)
+        {
+            var statusCode = StatusCodes.Status403Forbidden;
+            context.Result = new ObjectResult(ApiResponse<object?>.From(null, statusCode, "Access denied"))
+            {
+                StatusCode = statusCode
+            };
+            return;
+        }
+
+        if (context.Result is UnauthorizedResult)
+        {
+            var statusCode = StatusCodes.Status401Unauthorized;
+            context.Result = new ObjectResult(ApiResponse<object?>.From(null, statusCode, "Access denied"))
             {
                 StatusCode = statusCode
             };

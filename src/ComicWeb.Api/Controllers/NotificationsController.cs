@@ -14,11 +14,17 @@ public sealed class NotificationsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="NotificationsController"/> class.
+    /// </summary>
     public NotificationsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets all notifications.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<Notification>>>> GetAll()
     {
@@ -26,6 +32,9 @@ public sealed class NotificationsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<Notification>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a new notification.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<Notification>>> Create(NotificationCreateRequest request)
@@ -50,6 +59,9 @@ public sealed class NotificationsController : ControllerBase
         return Ok(ApiResponse<Notification>.From(item, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates an existing notification.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<Notification>>> Update(Guid id, NotificationCreateRequest request)
@@ -75,6 +87,9 @@ public sealed class NotificationsController : ControllerBase
         return Ok(ApiResponse<Notification>.From(item, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Deletes a notification by id.
+    /// </summary>
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Delete(Guid id)

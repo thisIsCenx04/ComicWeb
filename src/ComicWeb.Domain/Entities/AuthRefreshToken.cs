@@ -1,0 +1,13 @@
+namespace ComicWeb.Domain.Entities;
+
+public sealed class AuthRefreshToken
+{
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string TokenHash { get; set; } = string.Empty;
+    public bool Revoked { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public User? User { get; set; }
+}

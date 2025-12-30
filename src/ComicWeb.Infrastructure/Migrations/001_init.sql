@@ -1,6 +1,6 @@
 -- ============================================================
 -- Comic Platform (Comic Pages) - PostgreSQL Schema (Complete)
--- Based on provided API list, adapted from text/audio -> comic pages
+-- Based on provided API list, adapted from text -> comic pages
 -- ============================================================
 
 BEGIN;
@@ -135,7 +135,7 @@ CREATE TRIGGER trg_comics_updated_at
 BEFORE UPDATE ON comics
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- Chapters (content/audio no longer core; pages are core)
+-- Chapters (content no longer core; pages are core)
 CREATE TABLE IF NOT EXISTS chapters (
   id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   comic_id      uuid NOT NULL REFERENCES comics(id) ON DELETE CASCADE,
@@ -206,31 +206,7 @@ AFTER UPDATE OF chapter_id ON chapter_pages
 FOR EACH ROW EXECUTE FUNCTION sync_chapter_page_count();
 
 -- ============================================================
--- 3) AUDIO (optional module: bonus/voice/OST)
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS audios (
-  id          uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  comic_id    uuid REFERENCES comics(id) ON DELETE CASCADE,
-  slug        text UNIQUE NOT NULL,
-  title       text NOT NULL,
-  url         text,                            -- public URL
-  unit_price  int NOT NULL DEFAULT 0,
-  status      int NOT NULL DEFAULT 1,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_audios_comic ON audios(comic_id);
-CREATE INDEX IF NOT EXISTS idx_audios_slug ON audios(slug);
-
-DROP TRIGGER IF EXISTS trg_audios_updated_at ON audios;
-CREATE TRIGGER trg_audios_updated_at
-BEFORE UPDATE ON audios
-FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
--- ============================================================
--- 4) NOTIFICATIONS
+-- 3) NOTIFICATIONS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -253,7 +229,7 @@ BEFORE UPDATE ON notifications
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================
--- 5) COMMENTS (comic-level, supports replies)
+-- 4) COMMENTS (comic-level, supports replies)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS comments (
@@ -271,7 +247,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_parent
   ON comments(parent_id);
 
 -- ============================================================
--- 6) FAVORITES / FOLLOWS
+-- 5) FAVORITES / FOLLOWS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS favorites (
@@ -296,7 +272,7 @@ CREATE INDEX IF NOT EXISTS idx_follows_followed_created
   ON follows(followed_id, created_at DESC);
 
 -- ============================================================
--- 7) MISSIONS
+-- 6) MISSIONS
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS missions (
@@ -318,7 +294,7 @@ CREATE TABLE IF NOT EXISTS user_missions (
 CREATE INDEX IF NOT EXISTS idx_user_missions_user ON user_missions(user_id);
 
 -- ============================================================
--- 8) CURRENCY / PAYMENTS
+-- 7) CURRENCY / PAYMENTS
 -- ============================================================
 
 -- Currency ledger (POST /currency, GET /currency/history)
@@ -338,10 +314,9 @@ CREATE INDEX IF NOT EXISTS idx_currency_user_created
 CREATE TABLE IF NOT EXISTS transactions (
   id            uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type          text NOT NULL,               -- CHAPTER | COMIC | AUDIO | TOPUP | WITHDRAW
+  type          text NOT NULL,               -- CHAPTER | COMIC | TOPUP | WITHDRAW
   comic_id      uuid REFERENCES comics(id) ON DELETE SET NULL,
   chapter_id    uuid REFERENCES chapters(id) ON DELETE SET NULL,
-  audio_id      uuid REFERENCES audios(id) ON DELETE SET NULL,
   amount        int NOT NULL,
   currency_type int NOT NULL,               -- currenceType
   status        text NOT NULL,              -- PENDING | SUCCESS | FAILED
@@ -358,8 +333,8 @@ CREATE INDEX IF NOT EXISTS idx_tx_status ON transactions(status);
 -- Purchase cache for fast authorization checks (e.g., chapter pages access)
 CREATE TABLE IF NOT EXISTS user_purchases (
   user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type         text NOT NULL,               -- CHAPTER | COMIC | AUDIO
-  ref_id       uuid NOT NULL,               -- chapter_id/comic_id/audio_id
+  type         text NOT NULL,               -- CHAPTER | COMIC
+  ref_id       uuid NOT NULL,               -- chapter_id/comic_id
   purchased_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, type, ref_id)
 );
@@ -368,7 +343,7 @@ CREATE INDEX IF NOT EXISTS idx_purchases_ref
   ON user_purchases(type, ref_id);
 
 -- ============================================================
--- 9) WITHDRAW
+-- 8) WITHDRAW
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS withdraw_requests (
@@ -395,7 +370,7 @@ BEFORE UPDATE ON withdraw_requests
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ============================================================
--- 10) OUTSTANDINGS (featured placement)
+-- 9) OUTSTANDINGS (featured placement)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS outstandings (
@@ -410,7 +385,7 @@ CREATE INDEX IF NOT EXISTS idx_outstandings_comic_created
   ON outstandings(comic_id, created_at DESC);
 
 -- ============================================================
--- 11) UPLOADS (optional audit table for /uploads & /uploads/audio)
+-- 10) UPLOADS (optional audit table for /uploads)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS uploads (

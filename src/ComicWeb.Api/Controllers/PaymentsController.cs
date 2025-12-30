@@ -14,11 +14,17 @@ public sealed class PaymentsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PaymentsController"/> class.
+    /// </summary>
     public PaymentsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Purchases a chapter for the current user.
+    /// </summary>
     [Authorize]
     [HttpPost("purchased-chapter")]
     public async Task<ActionResult<ApiResponse<object?>>> PurchaseChapter(PurchaseChapterRequest request)
@@ -61,6 +67,9 @@ public sealed class PaymentsController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a paged list of transactions.
+    /// </summary>
     [Authorize]
     [HttpGet("transactions")]
     public async Task<ActionResult<ApiResponse<PagedResult<Transaction>>>> GetTransactions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, [FromQuery] string? status = null)
@@ -94,6 +103,9 @@ public sealed class PaymentsController : ControllerBase
         return Ok(ApiResponse<PagedResult<Transaction>>.From(result, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a transaction by id.
+    /// </summary>
     [Authorize]
     [HttpGet("transactions/check/{id:guid}")]
     public async Task<ActionResult<ApiResponse<Transaction>>> CheckTransaction(Guid id)
@@ -112,6 +124,9 @@ public sealed class PaymentsController : ControllerBase
         return Ok(ApiResponse<Transaction>.From(tx, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Manually accepts a pending transaction.
+    /// </summary>
     [Authorize]
     [HttpPut("accept-manual/{id:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> AcceptManual(Guid id)

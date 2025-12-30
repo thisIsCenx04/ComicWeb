@@ -14,11 +14,17 @@ public sealed class FavoritesController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FavoritesController"/> class.
+    /// </summary>
     public FavoritesController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Adds a comic to the current user's favorites.
+    /// </summary>
     [Authorize]
     [HttpPost("{comicId:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Add(Guid comicId)
@@ -34,6 +40,9 @@ public sealed class FavoritesController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Removes a comic from the current user's favorites.
+    /// </summary>
     [Authorize]
     [HttpDelete("{comicId:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Remove(Guid comicId)
@@ -49,6 +58,9 @@ public sealed class FavoritesController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets the current user's favorite comics.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetMine()

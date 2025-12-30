@@ -5,6 +5,9 @@ namespace ComicWeb.Infrastructure.Data;
 
 public sealed class ComicDbContext : DbContext
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ComicDbContext"/> class.
+    /// </summary>
     public ComicDbContext(DbContextOptions<ComicDbContext> options) : base(options)
     {
     }
@@ -17,7 +20,6 @@ public sealed class ComicDbContext : DbContext
     public DbSet<Comic> Comics => Set<Comic>();
     public DbSet<Chapter> Chapters => Set<Chapter>();
     public DbSet<ChapterPage> ChapterPages => Set<ChapterPage>();
-    public DbSet<Audio> Audios => Set<Audio>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
@@ -31,6 +33,9 @@ public sealed class ComicDbContext : DbContext
     public DbSet<Outstanding> Outstandings => Set<Outstanding>();
     public DbSet<Upload> Uploads => Set<Upload>();
 
+    /// <summary>
+    /// Configures entity mappings and database metadata.
+    /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("uuid-ossp");
@@ -162,22 +167,6 @@ public sealed class ComicDbContext : DbContext
             entity.HasIndex(e => new { e.ChapterId, e.PageOrder }).IsUnique();
         });
 
-        modelBuilder.Entity<Audio>(entity =>
-        {
-            entity.ToTable("audios");
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("uuid_generate_v4()");
-            entity.Property(e => e.ComicId).HasColumnName("comic_id");
-            entity.Property(e => e.Slug).HasColumnName("slug");
-            entity.Property(e => e.Title).HasColumnName("title");
-            entity.Property(e => e.Url).HasColumnName("url");
-            entity.Property(e => e.UnitPrice).HasColumnName("unit_price");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
-            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("now()");
-            entity.HasIndex(e => e.Slug).IsUnique();
-        });
-
         modelBuilder.Entity<Notification>(entity =>
         {
             entity.ToTable("notifications");
@@ -265,7 +254,6 @@ public sealed class ComicDbContext : DbContext
             entity.Property(e => e.Type).HasColumnName("type");
             entity.Property(e => e.ComicId).HasColumnName("comic_id");
             entity.Property(e => e.ChapterId).HasColumnName("chapter_id");
-            entity.Property(e => e.AudioId).HasColumnName("audio_id");
             entity.Property(e => e.Amount).HasColumnName("amount");
             entity.Property(e => e.CurrencyType).HasColumnName("currency_type");
             entity.Property(e => e.Status).HasColumnName("status");

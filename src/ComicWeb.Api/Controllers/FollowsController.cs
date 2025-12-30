@@ -14,11 +14,17 @@ public sealed class FollowsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FollowsController"/> class.
+    /// </summary>
     public FollowsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Follows a user.
+    /// </summary>
     [Authorize]
     [HttpPost("{userId:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Follow(Guid userId)
@@ -39,6 +45,9 @@ public sealed class FollowsController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Unfollows a user.
+    /// </summary>
     [Authorize]
     [HttpDelete("{userId:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Unfollow(Guid userId)
@@ -54,6 +63,9 @@ public sealed class FollowsController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets follow relationships for the current user.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<Follow>>>> GetMine()

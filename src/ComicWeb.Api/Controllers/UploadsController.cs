@@ -3,6 +3,7 @@ using ComicWeb.Domain.Entities;
 using ComicWeb.Infrastructure.Auth;
 using ComicWeb.Infrastructure.Data;
 using ComicWeb.Infrastructure.Storage;
+using ComicWeb.Infrastructure.Storage.Cloudinary;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -15,66 +16,54 @@ public sealed class UploadsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
     private readonly StorageSettings _settings;
+    private readonly CloudinaryStorageService _cloudinaryStorage;
 
-    public UploadsController(ComicDbContext dbContext, IOptions<StorageSettings> settings)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UploadsController"/> class.
+    /// </summary>
+    public UploadsController(ComicDbContext dbContext, IOptions<StorageSettings> settings, CloudinaryStorageService cloudinaryStorage)
     {
         _dbContext = dbContext;
         _settings = settings.Value;
+        _cloudinaryStorage = cloudinaryStorage;
     }
 
+    /// <summary>
+    /// Uploads an image and returns its public link.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<UploadResponse>>> UploadImage(IFormFile file)
     {
-        var link = await SaveFileAsync(file, _settings.ImagePath, new[] { "image/jpeg", "image/png", "image/webp" });
-        if (link == null)
-        {
-            return BadRequest(ApiResponse<object?>.From(null, StatusCodes.Status400BadRequest, "Invalid file"));
-        }
-
-        await SaveAuditAsync(link, "IMAGE");
-        return Ok(ApiResponse<UploadResponse>.From(new UploadResponse { Link = link }, StatusCodes.Status200OK));
-    }
-
-    [Authorize]
-    [HttpPost("audio")]
-    public async Task<ActionResult<ApiResponse<UploadResponse>>> UploadAudio(IFormFile file)
-    {
-        var link = await SaveFileAsync(file, _settings.AudioPath, new[] { "audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg" });
-        if (link == null)
-        {
-            return BadRequest(ApiResponse<object?>.From(null, StatusCodes.Status400BadRequest, "Invalid file"));
-        }
-
-        await SaveAuditAsync(link, "AUDIO");
-        return Ok(ApiResponse<UploadResponse>.From(new UploadResponse { Link = link }, StatusCodes.Status200OK));
-    }
-
-    private async Task<string?> SaveFileAsync(IFormFile file, string relativePath, string[] allowedContentTypes)
-    {
         if (file.Length == 0 || file.Length > _settings.MaxFileSizeMb * 1024L * 1024L)
         {
-            return null;
+            return BadRequest(ApiResponse<object?>.From(null, StatusCodes.Status400BadRequest, "Invalid file"));
         }
 
-        if (!allowedContentTypes.Contains(file.ContentType))
+        var allowed = new[] { "image/jpeg", "image/png", "image/webp" };
+        if (!allowed.Contains(file.ContentType))
         {
-            return null;
+            return BadRequest(ApiResponse<object?>.From(null, StatusCodes.Status400BadRequest, "Invalid file"));
         }
 
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-        var rootPath = Path.Combine(Directory.GetCurrentDirectory(), relativePath);
-        Directory.CreateDirectory(rootPath);
-        var filePath = Path.Combine(rootPath, fileName);
+        var result = await _cloudinaryStorage.UploadImageAsync(file, HttpContext.RequestAborted);
+        if (result == null || string.IsNullOrWhiteSpace(result.Link))
+        {
+            return BadRequest(ApiResponse<object?>.From(null, StatusCodes.Status400BadRequest, "Invalid file"));
+        }
 
-        await using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
-
-        var baseUrl = _settings.BaseUrl.TrimEnd('/');
-        var urlPath = relativePath.Replace("wwwroot", string.Empty).Replace("\\", "/");
-        return $"{baseUrl}{urlPath}/{fileName}";
+        await SaveAuditAsync(result.Link, "IMAGE");
+        return Ok(ApiResponse<UploadResponse>.From(new UploadResponse
+        {
+            Link = result.Link,
+            Width = result.Width,
+            Height = result.Height
+        }, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Writes an upload audit record for the current user.
+    /// </summary>
     private async Task SaveAuditAsync(string link, string fileType)
     {
         var userId = User.GetUserId();

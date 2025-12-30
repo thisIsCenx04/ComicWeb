@@ -14,11 +14,17 @@ public sealed class ComicsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ComicsController"/> class.
+    /// </summary>
     public ComicsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets a paged list of comics with optional filters.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<ComicDto>>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] Guid? categoryId = null, [FromQuery] int? status = null)
     {
@@ -69,6 +75,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<PagedResult<ComicDto>>.From(result, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a list of hot comics.
+    /// </summary>
     [HttpGet("hot")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetHot([FromQuery] int limit = 10)
     {
@@ -94,6 +103,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ComicDto>>.From(comics, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a list of outstanding comics.
+    /// </summary>
     [HttpGet("outstandings")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetOutstandings([FromQuery] int limit = 10)
     {
@@ -120,6 +132,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ComicDto>>.From(comics, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a list of recently completed comics.
+    /// </summary>
     [HttpGet("last-completed")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetLastCompleted([FromQuery] int limit = 10)
     {
@@ -145,6 +160,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ComicDto>>.From(comics, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a comic by slug with chapter details.
+    /// </summary>
     [Authorize]
     [HttpGet("slug/{slug}")]
     public async Task<ActionResult<ApiResponse<ComicDetailDto>>> GetBySlug(string slug)
@@ -186,6 +204,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<ComicDetailDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a new comic.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ComicDto>>> Create(ComicCreateRequest request)
@@ -232,6 +253,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<ComicDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates an existing comic.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<ComicDto>>> Update(Guid id, ComicUpdateRequest request)
@@ -285,6 +309,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<ComicDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates a comic's status and admin note.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}/status")]
     public async Task<ActionResult<ApiResponse<object?>>> UpdateStatus(Guid id, ComicStatusUpdateRequest request)
@@ -307,6 +334,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets comics created by the current user.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetMine()
@@ -334,6 +364,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ComicDto>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets comics purchased by the current user.
+    /// </summary>
     [Authorize]
     [HttpGet("purchased")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ComicDto>>>> GetPurchased()
@@ -361,6 +394,9 @@ public sealed class ComicsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ComicDto>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates an outstanding entry for a comic.
+    /// </summary>
     [Authorize]
     [HttpPost("outstandings")]
     public async Task<ActionResult<ApiResponse<object?>>> CreateOutstanding(OutstandingCreateRequest request)

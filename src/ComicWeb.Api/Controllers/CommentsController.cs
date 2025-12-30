@@ -14,11 +14,17 @@ public sealed class CommentsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommentsController"/> class.
+    /// </summary>
     public CommentsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets comments for a comic.
+    /// </summary>
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<Comment>>>> GetByComic([FromQuery] Guid comicId)
     {
@@ -30,6 +36,9 @@ public sealed class CommentsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<Comment>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a new comment for a comic.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<Comment>>> Create(CommentCreateRequest request)
@@ -49,6 +58,9 @@ public sealed class CommentsController : ControllerBase
         return Ok(ApiResponse<Comment>.From(comment, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Deletes a comment by id.
+    /// </summary>
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Delete(Guid id)

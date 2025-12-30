@@ -14,11 +14,17 @@ public sealed class WithdrawsController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WithdrawsController"/> class.
+    /// </summary>
     public WithdrawsController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Creates a withdraw request for the current user.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<WithdrawRequest>>> Create(WithdrawCreateRequest request)
@@ -46,6 +52,9 @@ public sealed class WithdrawsController : ControllerBase
         return Ok(ApiResponse<WithdrawRequest>.From(withdraw, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets withdraw requests for the current user.
+    /// </summary>
     [Authorize]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<WithdrawRequest>>>> GetMine()
@@ -59,6 +68,9 @@ public sealed class WithdrawsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<WithdrawRequest>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets all withdraw requests for admin users.
+    /// </summary>
     [Authorize]
     [HttpGet("admin")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<WithdrawRequest>>>> GetAll()
@@ -75,6 +87,9 @@ public sealed class WithdrawsController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<WithdrawRequest>>.From(items, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates the status of a withdraw request.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<WithdrawRequest>>> UpdateStatus(Guid id, WithdrawStatusRequest request)
@@ -97,6 +112,9 @@ public sealed class WithdrawsController : ControllerBase
         return Ok(ApiResponse<WithdrawRequest>.From(withdraw, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Calculates the current balance for a user.
+    /// </summary>
     private async Task<int> GetBalanceAsync(Guid userId)
     {
         var credits = await _dbContext.CurrencyLedgers

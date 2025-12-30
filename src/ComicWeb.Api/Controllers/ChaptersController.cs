@@ -14,11 +14,17 @@ public sealed class ChaptersController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ChaptersController"/> class.
+    /// </summary>
     public ChaptersController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets a chapter by id, optionally including pages.
+    /// </summary>
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<ChapterDto>>> GetById(Guid id, [FromQuery] bool includePages = false)
     {
@@ -49,6 +55,59 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<ChapterDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets a paged list of chapters with optional filters.
+    /// </summary>
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<PagedResult<ChapterDto>>>> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, [FromQuery] Guid? comicId = null, [FromQuery] int? status = null)
+    {
+        var query = _dbContext.Chapters.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(c => c.Title.ToLower().Contains(search.ToLower()));
+        }
+
+        if (comicId.HasValue)
+        {
+            query = query.Where(c => c.ComicId == comicId);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(c => c.Status == status);
+        }
+
+        var total = await query.CountAsync();
+        var items = await query.OrderByDescending(c => c.CreatedAt)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new ChapterDto
+            {
+                Id = c.Id,
+                ComicId = c.ComicId,
+                Slug = c.Slug,
+                Title = c.Title,
+                ThumbnailUrl = c.ThumbnailUrl,
+                UnitPrice = c.UnitPrice,
+                PageCount = c.PageCount,
+                Status = c.Status
+            })
+            .ToListAsync();
+
+        var result = new PagedResult<ChapterDto>
+        {
+            Items = items,
+            Total = total,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+
+        return Ok(ApiResponse<PagedResult<ChapterDto>>.From(result, StatusCodes.Status200OK));
+    }
+
+    /// <summary>
+    /// Creates a new chapter.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ChapterDto>>> Create(ChapterCreateRequest request)
@@ -93,6 +152,9 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<ChapterDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Updates an existing chapter.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<ChapterDto>>> Update(Guid id, ChapterUpdateRequest request)
@@ -131,6 +193,9 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<ChapterDto>.From(dto, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Deletes a chapter by id.
+    /// </summary>
     [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> Delete(Guid id)
@@ -147,6 +212,9 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Adds a batch of pages to a chapter.
+    /// </summary>
     [Authorize]
     [HttpPost("{id:guid}/pages")]
     public async Task<ActionResult<ApiResponse<object?>>> AddPages(Guid id, ChapterPagesBulkRequest request)
@@ -194,6 +262,9 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<object?>.From(response, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets pages for a chapter, enforcing purchase rules.
+    /// </summary>
     [Authorize]
     [HttpGet("{id:guid}/pages")]
     public async Task<ActionResult<ApiResponse<IReadOnlyList<ChapterPageDto>>>> GetPages(Guid id)
@@ -229,6 +300,47 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<IReadOnlyList<ChapterPageDto>>.From(pages, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Gets pages for a chapter by slug, enforcing purchase rules.
+    /// </summary>
+    [Authorize]
+    [HttpGet("slug/{slug}/pages")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<ChapterPageDto>>>> GetPagesBySlug(string slug)
+    {
+        var chapter = await _dbContext.Chapters.Include(c => c.Comic).FirstOrDefaultAsync(c => c.Slug == slug);
+        if (chapter == null)
+        {
+            return NotFound(ApiResponse<object?>.From(null, StatusCodes.Status404NotFound, "Chapter not found"));
+        }
+
+        if (chapter.UnitPrice > 0)
+        {
+            var userId = User.GetUserId();
+            var isOwner = chapter.Comic?.OwnerId == userId;
+            var purchased = await _dbContext.UserPurchases.AnyAsync(p => p.UserId == userId && p.Type == "CHAPTER" && p.RefId == chapter.Id);
+            if (!isOwner && !purchased && !User.IsAdmin())
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, ApiResponse<object?>.From(null, StatusCodes.Status403Forbidden, "Purchase required"));
+            }
+        }
+
+        var pages = await _dbContext.ChapterPages
+            .Where(p => p.ChapterId == chapter.Id)
+            .OrderBy(p => p.PageOrder)
+            .Select(p => new ChapterPageDto
+            {
+                Id = p.Id,
+                PageOrder = p.PageOrder,
+                ImageUrl = p.ImageUrl
+            })
+            .ToListAsync();
+
+        return Ok(ApiResponse<IReadOnlyList<ChapterPageDto>>.From(pages, StatusCodes.Status200OK));
+    }
+
+    /// <summary>
+    /// Reorders pages within a chapter.
+    /// </summary>
     [Authorize]
     [HttpPut("{id:guid}/pages/reorder")]
     public async Task<ActionResult<ApiResponse<object?>>> ReorderPages(Guid id, ChapterPageReorderRequest request)
@@ -268,6 +380,9 @@ public sealed class ChaptersController : ControllerBase
         return Ok(ApiResponse<object?>.From(null, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Deletes a page from a chapter.
+    /// </summary>
     [Authorize]
     [HttpDelete("{id:guid}/pages/{pageId:guid}")]
     public async Task<ActionResult<ApiResponse<object?>>> DeletePage(Guid id, Guid pageId)

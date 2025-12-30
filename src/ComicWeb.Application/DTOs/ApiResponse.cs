@@ -14,6 +14,9 @@ public sealed class ApiResponse<T> : IApiResponse
     public string? Message { get; init; }
     public T? Data { get; init; }
 
+    /// <summary>
+    /// Creates a standardized API response envelope.
+    /// </summary>
     public static ApiResponse<T> From(T? data, int statusCode, string? message = null)
     {
         return new ApiResponse<T>

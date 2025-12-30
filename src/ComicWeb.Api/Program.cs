@@ -1,14 +1,15 @@
-using System.Text;
 using ComicWeb.Api.Filters;
 using ComicWeb.Application.DTOs;
 using ComicWeb.Infrastructure.Auth;
 using ComicWeb.Infrastructure.Data;
 using ComicWeb.Infrastructure.Storage;
+using ComicWeb.Infrastructure.Storage.Cloudinary;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,9 +49,11 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.Configure<StorageSettings>(builder.Configuration.GetSection("Storage"));
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<DatabaseBootstrapper>();
 builder.Services.AddScoped<DbSeeder>();
+builder.Services.AddScoped<CloudinaryStorageService>();
 
 builder.Services.AddDbContext<ComicDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -61,6 +64,34 @@ var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = context =>
+            {
+                if (context.Response.HasStarted)
+                {
+                    return Task.CompletedTask;
+                }
+
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                var response = ApiResponse<object?>.From(null, StatusCodes.Status401Unauthorized, "Access denied");
+                return context.Response.WriteAsJsonAsync(response);
+            },
+            OnForbidden = context =>
+            {
+                if (context.Response.HasStarted)
+                {
+                    return Task.CompletedTask;
+                }
+
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                var response = ApiResponse<object?>.From(null, StatusCodes.Status403Forbidden, "Access denied");
+                return context.Response.WriteAsJsonAsync(response);
+            }
+        };
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

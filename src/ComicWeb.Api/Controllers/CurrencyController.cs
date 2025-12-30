@@ -14,11 +14,17 @@ public sealed class CurrencyController : ControllerBase
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CurrencyController"/> class.
+    /// </summary>
     public CurrencyController(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Gets the current user's currency history.
+    /// </summary>
     [Authorize]
     [HttpGet("history")]
     public async Task<ActionResult<ApiResponse<PagedResult<CurrencyLedger>>>> GetHistory([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
@@ -42,6 +48,9 @@ public sealed class CurrencyController : ControllerBase
         return Ok(ApiResponse<PagedResult<CurrencyLedger>>.From(result, StatusCodes.Status200OK));
     }
 
+    /// <summary>
+    /// Creates a currency ledger entry.
+    /// </summary>
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<ApiResponse<CurrencyLedger>>> CreateEntry(CurrencyEntryRequest request)

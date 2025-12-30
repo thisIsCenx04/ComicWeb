@@ -5,6 +5,9 @@ namespace ComicWeb.Api.Filters;
 
 public static class ExceptionHandlerExtensions
 {
+    /// <summary>
+    /// Registers a global exception handler that returns standardized responses.
+    /// </summary>
     public static void UseApiExceptionHandler(this IApplicationBuilder app, ILogger logger)
     {
         app.UseExceptionHandler(handlerApp =>

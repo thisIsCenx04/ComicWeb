@@ -9,11 +9,17 @@ public sealed class DbSeeder
 {
     private readonly ComicDbContext _dbContext;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbSeeder"/> class.
+    /// </summary>
     public DbSeeder(ComicDbContext dbContext)
     {
         _dbContext = dbContext;
     }
 
+    /// <summary>
+    /// Seeds initial data when the database is empty.
+    /// </summary>
     public async Task SeedAsync()
     {
         if (await _dbContext.Users.AnyAsync())
